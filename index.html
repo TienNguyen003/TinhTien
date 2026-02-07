@@ -238,62 +238,96 @@
           font-size: 20px;
         }
       }
+
+      /* Modal xem Sheets */
+      #sheetsModal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+      }
+      .sheets-content {
+        background: white;
+        margin: 2% auto;
+        padding: 10px;
+        border-radius: 12px;
+        width: 95%;
+        max-width: 1200px;
+        height: 85vh;
+        position: relative;
+      }
+      .close-sheets {
+        color: black;
+        font-size: 30px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="config-section">
-        <h4>⚙️ Cấu hình Google Sheets</h4>
-        <input type="text" id="googleScriptUrl" placeholder="Dán Web App URL vào đây..." onchange="saveConfig()" />
-        <small style="display: block; margin-top: 5px; color: #94a3b8">Nhấn 'Đồng bộ' để đẩy lên Sheets.</small>
-      </div>
-
-      <h2>📒 Quản lý Chi tiêu</h2>
-
-      <div class="input-group">
-        <div>
-          <label style="font-size: 14px; color: #64748b">Tháng/Năm</label>
-          <input type="month" id="monthYear" />
+      <div>
+        <div class="config-section">
+          <h4>⚙️ Cấu hình Google Sheets</h4>
+          <input type="text" id="googleScriptUrl" placeholder="Dán Web App URL vào đây..." onchange="saveConfig()" />
+          <small style="display: block; margin-top: 5px; color: #94a3b8">Nhấn 'Đồng bộ' để đẩy lên Sheets.</small>
         </div>
-        <div>
-          <label style="font-size: 14px; color: #64748b">Thu nhập (VNĐ)</label>
-          <input type="number" id="income" placeholder="VD: 15000000" />
+
+        <h2>📒 Quản lý Chi tiêu</h2>
+
+        <div class="input-group">
+          <div>
+            <label style="font-size: 14px; color: #64748b">Tháng/Năm</label>
+            <input type="month" id="monthYear" />
+          </div>
+          <div>
+            <label style="font-size: 14px; color: #64748b">Thu nhập (VNĐ)</label>
+            <input type="number" id="income" placeholder="VD: 15000000" />
+          </div>
         </div>
-      </div>
 
-      <div id="expenseList">
-        <div class="expense-row">
-          <input type="text" placeholder="Tên khoản chi" class="ex-name" />
-          <input type="number" placeholder="Số tiền" class="ex-amount" />
-          <button onclick="this.parentElement.remove()" style="background: #fee2e2; color: var(--d)">✕</button>
+        <div id="expenseList">
+          <div class="expense-row">
+            <input type="text" placeholder="Tên khoản chi" class="ex-name" />
+            <input type="number" placeholder="Số tiền" class="ex-amount" />
+            <button onclick="this.parentElement.remove()" style="background: #fee2e2; color: var(--d)">✕</button>
+          </div>
         </div>
-      </div>
 
-      <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
-      <button class="btn-main" onclick="processData()">📊 Lưu vào máy này</button>
-      <button class="btn-sync" onclick="syncToGoogle()">☁️ Đồng bộ lên Google Sheets</button>
-
-      <div class="summary-grid">
-        <div class="stat-card bg-blue"><small>Dư tháng chọn</small><b id="monthlyRemain">0 ₫</b></div>
-        <div class="stat-card bg-green">
-          <small>Tích lũy năm <span id="displayYear"></span></small><b id="yearlyRemain">0 ₫</b>
+        <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
+        <div style="display: flex;">
+          <button class="btn-main" style="height: 40px" onclick="processData()">📊 Lưu vào máy này</button>
+          <button class="btn-sync" style="height: 40px; margin-left: 10px" onclick="syncToGoogle()">☁️ Đồng bộ lên Google Sheets</button>
+          <button onclick="openSheetsModal()" style="background: #64748b; color: white; width: 100%; height: 40px; margin-left: 10px">
+            👁️ Xem bảng tính trực tiếp
+          </button>
         </div>
-        <div class="stat-card bg-indigo"><small>Tổng tích lũy</small><b id="totalRemain">0 ₫</b></div>
-      </div>
 
-      <h3>📜 Lịch sử</h3>
-      <div class="table-container">
-        <table id="historyTable">
-          <thead>
-            <tr>
-              <th>Tháng</th>
-              <th>Thu nhập</th>
-              <th>Còn dư</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div class="summary-grid">
+          <div class="stat-card bg-blue"><small>Dư tháng chọn</small><b id="monthlyRemain">0 ₫</b></div>
+          <div class="stat-card bg-green">
+            <small>Tích lũy năm <span id="displayYear"></span></small><b id="yearlyRemain">0 ₫</b>
+          </div>
+          <div class="stat-card bg-indigo"><small>Tổng tích lũy</small><b id="totalRemain">0 ₫</b></div>
+        </div>
+
+        <h3>📜 Lịch sử</h3>
+        <div class="table-container">
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>Tháng</th>
+                <th>Thu nhập</th>
+                <th>Còn dư</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -315,6 +349,19 @@
           id="modalTotal"
           style="text-align: right; margin-top: 15px; font-weight: bold; font-size: 16px; line-height: 1.6"
         ></div>
+      </div>
+    </div>
+
+    <div id="sheetsModal">
+      <div class="sheets-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+          <h4 style="margin: 0 0 10px 0; color: #1e293b">Bảng tính Google Sheets</h4>
+          <span class="close-sheets" onclick="closeSheetsModal()">&times;</span>
+        </div>
+        <iframe
+          src="https://docs.google.com/spreadsheets/d/1SohNVWLW2lZROdtSzfu4R6-jbSLA8RD4_vOp2JhatCs/edit?rm=minimal"
+          style="width: 100%; height: calc(100% - 40px); border: 1px solid #e2e8f0; border-radius: 8px"
+        ></iframe>
       </div>
     </div>
 
@@ -527,6 +574,29 @@
 
         // Gọi hàm kiểm tra ngay khi load trang
         updateInputsByMonth(monthInput.value);
+      };
+
+      function openSheetsModal() {
+        document.getElementById("sheetsModal").style.display = "block";
+        document.body.style.overflow = "hidden"; // Chặn cuộn trang web khi đang xem Sheets
+      }
+
+      function closeSheetsModal() {
+        document.getElementById("sheetsModal").style.display = "none";
+        document.body.style.overflow = "auto"; // Cho phép cuộn lại bình thường
+      }
+
+      // Đóng modal khi bấm ra ngoài vùng trắng
+      window.onclick = function (event) {
+        let modal = document.getElementById("sheetsModal");
+        if (event.target == modal) {
+          closeSheetsModal();
+        }
+        // Giữ lại logic đóng modal chi tiết cũ của mày
+        let detailModal = document.getElementById("detailModal");
+        if (event.target == detailModal) {
+          closeModal();
+        }
       };
     </script>
   </body>
