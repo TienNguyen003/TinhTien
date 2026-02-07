@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,16 +12,20 @@
         --d: #ef4444;
         --bg: #f1f5f9;
       }
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: "Roboto Slab";
+        font-family: "Roboto Slab", serif;
         background: var(--bg);
-        padding: 20px;
+        padding: 10px;
+        margin: 0;
       }
       .container {
         max-width: 900px;
-        margin: auto;
+        margin: 10px auto;
         background: white;
-        padding: 30px;
+        padding: 20px;
         border-radius: 16px;
         box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
       }
@@ -40,6 +44,7 @@
         font-size: 14px;
       }
 
+      /* Grid Input */
       .input-group {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -51,26 +56,36 @@
         padding: 12px;
         border: 1px solid #cbd5e1;
         border-radius: 8px;
-        box-sizing: border-box;
         font-family: inherit;
+        font-size: 16px; /* Tránh zoom trên iOS */
       }
       .expense-row {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 10px;
       }
+      .expense-row input:first-child {
+        flex: 2;
+      }
+      .expense-row input:nth-child(2) {
+        flex: 1.5;
+      }
 
+      /* Buttons */
       button {
-        padding: 10px 20px;
+        padding: 12px;
         border: none;
         border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
         font-family: inherit;
         transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .btn-add {
-        background: #f8fafc;
+        background: #f1f5f9;
         border: 1px dashed #cbd5e1;
         width: 100%;
         color: #64748b;
@@ -81,23 +96,23 @@
         color: white;
         width: 100%;
         font-size: 16px;
-        height: 50px;
+        margin-bottom: 10px;
       }
       .btn-sync {
         background: var(--s);
         color: white;
-        margin-top: 10px;
         width: 100%;
       }
 
+      /* Thống kê Card */
       .summary-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
+        gap: 10px;
         margin-top: 30px;
       }
       .stat-card {
-        padding: 20px;
+        padding: 15px 10px;
         border-radius: 12px;
         text-align: center;
         color: white;
@@ -111,76 +126,137 @@
       .bg-indigo {
         background: #4f46e5;
       }
-      .stat-card b {
-        font-size: 20px;
+      .stat-card small {
         display: block;
+        font-size: 11px;
+        opacity: 0.9;
+        margin-bottom: 5px;
+      }
+      .stat-card b {
+        font-size: 14px;
+        word-break: break-all;
       }
 
+      /* Lịch sử Table */
+      .table-container {
+        overflow-x: auto;
+        margin-top: 20px;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 30px;
+        /* min-width: 500px;  */
       }
       th,
       td {
-        padding: 12px;
+        padding: 12px 8px;
         text-align: left;
         border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
       }
       th {
         background: #f8fafc;
         color: #64748b;
       }
+      .btn-view {
+        background: #e0e7ff;
+        color: #4338ca;
+        padding: 6px 10px;
+        font-size: 12px;
+      }
 
+      /* Modal */
       #detailModal {
         display: none;
         position: fixed;
-        z-index: 100;
+        z-index: 1000;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
+        padding: 15px;
       }
       .modal-content {
         background: white;
-        margin: 10% auto;
-        padding: 25px;
+        margin: 5% auto;
+        padding: 20px;
         border-radius: 12px;
         max-width: 500px;
+        width: 100%;
         position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
       }
       .close-modal {
         position: absolute;
-        right: 20px;
-        top: 15px;
-        font-size: 24px;
+        right: 15px;
+        top: 10px;
+        font-size: 28px;
         cursor: pointer;
+      }
+
+      /* --- RESPONSIVE CHO ĐIỆN THOẠI --- */
+      @media (max-width: 600px) {
+        .container {
+          padding: 15px;
+          border-radius: 0;
+          margin: 0;
+        }
+        .input-group {
+          grid-template-columns: 1fr;
+        } /* Chuyển nhập liệu thành 1 cột */
+
+        .summary-grid {
+          grid-template-columns: 1fr; /* Card thống kê xếp chồng lên nhau */
+        }
+        .stat-card {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px;
+        }
+        .stat-card small {
+          margin-bottom: 0;
+          font-size: 14px;
+        }
+        .stat-card b {
+          font-size: 18px;
+        }
+
+        .expense-row {
+          flex-wrap: wrap;
+        }
+        .expense-row input {
+          flex: 1 1 40% !important;
+        }
+        .expense-row button {
+          width: 40px;
+        }
+
+        h2 {
+          font-size: 20px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="config-section">
-        <h4>⚙️ Cấu hình Google Sheets (Dành cho người dùng khác)</h4>
-        <input
-          type="text"
-          id="googleScriptUrl"
-          placeholder="Dán Web App URL từ Google Script vào đây để đồng bộ..."
-          onchange="saveConfig()"
-        />
-        <small style="color: #94a3b8">Dữ liệu sẽ được lưu tại trình duyệt này. Nhấn 'Đồng bộ' để đẩy lên Sheets.</small>
+        <h4>⚙️ Cấu hình Google Sheets</h4>
+        <input type="text" id="googleScriptUrl" placeholder="Dán Web App URL vào đây..." onchange="saveConfig()" />
+        <small style="display: block; margin-top: 5px; color: #94a3b8">Nhấn 'Đồng bộ' để đẩy lên Sheets.</small>
       </div>
 
       <h2>📒 Quản lý Chi tiêu</h2>
 
       <div class="input-group">
         <div>
-          <label>Tháng/Năm</label>
+          <label style="font-size: 14px; color: #64748b">Tháng/Năm</label>
           <input type="month" id="monthYear" />
         </div>
         <div>
-          <label>Thu nhập (VNĐ)</label>
+          <label style="font-size: 14px; color: #64748b">Thu nhập (VNĐ)</label>
           <input type="number" id="income" placeholder="VD: 15000000" />
         </div>
       </div>
@@ -192,8 +268,8 @@
           <button onclick="this.parentElement.remove()" style="background: #fee2e2; color: var(--d)">✕</button>
         </div>
       </div>
-      <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
 
+      <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
       <button class="btn-main" onclick="processData()">📊 Lưu vào máy này</button>
       <button class="btn-sync" onclick="syncToGoogle()">☁️ Đồng bộ lên Google Sheets</button>
 
@@ -206,42 +282,47 @@
       </div>
 
       <h3>📜 Lịch sử</h3>
-      <table id="historyTable">
-        <thead>
-          <tr>
-            <th>Tháng</th>
-            <th>Thu nhập</th>
-            <th>Còn dư</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="table-container">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Tháng</th>
+              <th>Thu nhập</th>
+              <th>Còn dư</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="detailModal">
       <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h3 id="modalTitle">Chi tiết</h3>
+        <h3 id="modalTitle" style="margin-top: 0">Chi tiết</h3>
         <table style="width: 100%">
           <thead>
             <tr>
               <th>Khoản chi</th>
               <th>Số tiền</th>
+              <th>Tiền còn lại</th>
             </tr>
           </thead>
           <tbody id="modalBody"></tbody>
         </table>
-        <div id="modalTotal" style="text-align: right; margin-top: 10px; font-weight: bold"></div>
+        <div
+          id="modalTotal"
+          style="text-align: right; margin-top: 15px; font-weight: bold; font-size: 16px; line-height: 1.6"
+        ></div>
       </div>
     </div>
 
     <script>
-      // Khởi tạo
+      // Giữ nguyên toàn bộ phần script của bạn
       window.onload = () => {
         const savedUrl = localStorage.getItem("google_script_url");
         if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
-
         document.getElementById("monthYear").value = new Date().toISOString().slice(0, 7);
         renderHistory();
       };
@@ -286,17 +367,16 @@
 
         localStorage.setItem("expense_detail_data", JSON.stringify(history));
         renderHistory();
-        alert("Đã lưu vào bộ nhớ trình duyệt!");
+        updateInputsByMonth(date);
+        alert("Đã lưu thành công!");
       }
 
       async function syncToGoogle() {
         const url = document.getElementById("googleScriptUrl").value;
         if (!url) return alert("Vui lòng điền Web App URL!");
-
         const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
-        if (history.length === 0) return alert("Không có dữ liệu để đồng bộ!");
-
-        if (!confirm(`Bạn muốn gửi tất cả ${history.length} bản ghi lên Google Sheets?`)) return;
+        if (history.length === 0) return alert("Không có dữ liệu!");
+        if (!confirm(`Bạn muốn đồng bộ ${history.length} tháng lên Google Sheets?`)) return;
 
         let successCount = 0;
         for (const entry of history) {
@@ -309,10 +389,10 @@
             });
             successCount++;
           } catch (e) {
-            console.error("Lỗi gửi bản ghi:", entry.date, e);
+            console.error("Lỗi:", e);
           }
         }
-        alert(`Đã đồng bộ thành công ${successCount} tháng lên Google Sheets!`);
+        alert(`Đã đồng bộ xong ${successCount} bản ghi!`);
       }
 
       function renderHistory() {
@@ -331,11 +411,17 @@
                 <td><b>${data.date}</b></td>
                 <td>${data.income.toLocaleString()}</td>
                 <td style="color:${data.remain >= 0 ? "green" : "red"}"><b>${data.remain.toLocaleString()}</b></td>
-                <td><button class="btn-view" onclick="showDetail(${index})">👁 Chi tiết</button></td>
+                <td><button class="btn-view" onclick="showDetail(${index})">👁 Xem</button></td>
             </tr>`;
         });
         document.getElementById("totalRemain").innerText = totalAcc.toLocaleString() + " ₫";
         document.getElementById("yearlyRemain").innerText = yearlyAcc.toLocaleString() + " ₫";
+
+        // Cập nhật số dư tháng đang chọn
+        const currentDate = document.getElementById("monthYear").value;
+        const currentData = history.find((h) => h.date === currentDate);
+        document.getElementById("monthlyRemain").innerText =
+          (currentData ? currentData.remain.toLocaleString() : "0") + " ₫";
       }
 
       function showDetail(index) {
@@ -344,10 +430,40 @@
         document.getElementById("modalTitle").innerText = "Chi tiết: " + data.date;
         const modalBody = document.getElementById("modalBody");
         modalBody.innerHTML = "";
+
+        // Bắt đầu từ số thu nhập ban đầu
+        let runningBalance = data.income;
+
         data.items.forEach((item) => {
-          modalBody.innerHTML += `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()} ₫</td></tr>`;
+          runningBalance -= item.amount; // Trừ dần từng khoản chi
+          modalBody.innerHTML += `
+            <tr>
+              <td>${item.name}</td>
+              <td>${item.amount.toLocaleString()} ₫</td>
+              <td style="color: ${runningBalance >= 0 ? "#64748b" : "red"}">
+                ${runningBalance.toLocaleString()} ₫
+              </td>
+            </tr>`;
         });
-        document.getElementById("modalTotal").innerText = "Tổng chi: " + data.totalExp.toLocaleString() + " ₫";
+
+        document.getElementById("modalTotal").innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; text-align: center;">
+            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Thu nhập</div>
+              <div style="font-size: 15px; color: var(--p); font-weight: 700;">${data.income.toLocaleString()} ₫</div>
+            </div>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Tổng chi</div>
+              <div style="font-size: 15px; color: var(--d); font-weight: 700;">${data.totalExp.toLocaleString()} ₫</div>
+            </div>
+            <div style="grid-column: span 2; background: ${data.remain >= 0 ? "#f0fdf4" : "#fef2f2"}; padding: 12px; border-radius: 8px; border: 1px solid ${data.remain >= 0 ? "#bbf7d0" : "#fecaca"};">
+              <div style="font-size: 12px; color: #64748b;">Số dư cuối cùng</div>
+              <div style="font-size: 20px; color: ${data.remain >= 0 ? "var(--s)" : "var(--d)"}; font-weight: 800;">
+                ${data.remain.toLocaleString()} ₫
+              </div>
+            </div>
+          </div>
+        `;
         document.getElementById("detailModal").style.display = "block";
       }
 
@@ -355,30 +471,57 @@
         document.getElementById("detailModal").style.display = "none";
       }
 
-      // Logic làm mới ô nhập khi đổi tháng
-      document.getElementById("monthYear").addEventListener("change", function () {
+      document.getElementById("monthYear").addEventListener("change", renderHistory);
+
+      // Hàm cập nhật các ô input dựa trên dữ liệu đã có của tháng được chọn
+      function updateInputsByMonth(selectedDate) {
         const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
-        const existingData = history.find((item) => item.date === this.value);
+        const existingData = history.find((item) => item.date === selectedDate);
         const expenseList = document.getElementById("expenseList");
         const incomeInput = document.getElementById("income");
 
         if (existingData) {
+          // Nếu tháng này đã có dữ liệu: Đổ dữ liệu vào
           incomeInput.value = existingData.income;
-          expenseList.innerHTML = "";
+          expenseList.innerHTML = ""; // Xóa các ô trống cũ
           existingData.items.forEach((item) => {
             const div = document.createElement("div");
             div.className = "expense-row";
-            div.innerHTML = `<input type="text" class="ex-name" value="${item.name}">
-                                 <input type="number" class="ex-amount" value="${item.amount}">
-                                 <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
+            div.innerHTML = `
+              <input type="text" class="ex-name" value="${item.name}">
+              <input type="number" class="ex-amount" value="${item.amount}">
+              <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
             expenseList.appendChild(div);
           });
         } else {
+          // Nếu tháng mới hoàn toàn: Để trống thu nhập và hiện 1 hàng nhập trống
           incomeInput.value = "";
-          expenseList.innerHTML = `<div class="expense-row"><input type="text" class="ex-name"><input type="number" class="ex-amount"></div>`;
+          expenseList.innerHTML = `
+            <div class="expense-row">
+              <input type="text" placeholder="Tên khoản chi" class="ex-name">
+              <input type="number" placeholder="Số tiền" class="ex-amount">
+              <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>
+            </div>`;
         }
-        renderHistory();
+        renderHistory(); // Cập nhật lại các thẻ thống kê
+      }
+
+      // Lắng nghe sự kiện thay đổi tháng
+      document.getElementById("monthYear").addEventListener("change", function () {
+        updateInputsByMonth(this.value);
       });
+
+      // Cập nhật hàm window.onload để khi vừa mở web là nó kiểm tra tháng hiện tại luôn
+      window.onload = () => {
+        const savedUrl = localStorage.getItem("google_script_url");
+        if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
+
+        const monthInput = document.getElementById("monthYear");
+        monthInput.value = new Date().toISOString().slice(0, 7);
+
+        // Gọi hàm kiểm tra ngay khi load trang
+        updateInputsByMonth(monthInput.value);
+      };
     </script>
   </body>
 </html>
