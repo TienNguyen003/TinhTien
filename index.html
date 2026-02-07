@@ -274,6 +274,9 @@
           <h4>⚙️ Cấu hình Google Sheets</h4>
           <input type="text" id="googleScriptUrl" placeholder="Dán Web App URL vào đây..." onchange="saveConfig()" />
           <small style="display: block; margin-top: 5px; color: #94a3b8">Nhấn 'Đồng bộ' để đẩy lên Sheets.</small>
+          <p></p>
+          <input type="text" id="googleSheetUrl" placeholder="Google Sheet URL..." onchange="saveGoogleSheetUrl()" />
+          <small style="display: block; margin-top: 5px; color: #94a3b8">Dán link Sheets để xem trực tiếp.</small>
         </div>
 
         <h2>📒 Quản lý Chi tiêu</h2>
@@ -298,10 +301,15 @@
         </div>
 
         <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
-        <div style="display: flex;">
+        <div style="display: flex">
           <button class="btn-main" style="height: 40px" onclick="processData()">📊 Lưu vào máy này</button>
-          <button class="btn-sync" style="height: 40px; margin-left: 10px" onclick="syncToGoogle()">☁️ Đồng bộ lên Google Sheets</button>
-          <button onclick="openSheetsModal()" style="background: #64748b; color: white; width: 100%; height: 40px; margin-left: 10px">
+          <button class="btn-sync" style="height: 40px; margin-left: 10px" onclick="syncToGoogle()">
+            ☁️ Đồng bộ lên Google Sheets
+          </button>
+          <button
+            onclick="openSheetsModal()"
+            style="background: #64748b; color: white; width: 100%; height: 40px; margin-left: 10px"
+          >
             👁️ Xem bảng tính trực tiếp
           </button>
         </div>
@@ -359,23 +367,28 @@
           <span class="close-sheets" onclick="closeSheetsModal()">&times;</span>
         </div>
         <iframe
-          src="https://docs.google.com/spreadsheets/d/1SohNVWLW2lZROdtSzfu4R6-jbSLA8RD4_vOp2JhatCs/edit?rm=minimal"
+          id="sheetsFrame"
           style="width: 100%; height: calc(100% - 40px); border: 1px solid #e2e8f0; border-radius: 8px"
         ></iframe>
       </div>
     </div>
 
     <script>
-      // Giữ nguyên toàn bộ phần script của bạn
       window.onload = () => {
-        const savedUrl = localStorage.getItem("google_script_url");
-        if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
-        document.getElementById("monthYear").value = new Date().toISOString().slice(0, 7);
-        renderHistory();
+        // const savedUrl = localStorage.getItem("google_script_url");
+        // const sheetUrl = localStorage.getItem("google_sheet_url");
+        // if (sheetUrl) document.getElementById("googleSheetUrl").value = sheetUrl;
+        // if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
+        // document.getElementById("monthYear").value = new Date().toISOString().slice(0, 7);
+        // renderHistory();
       };
 
       function saveConfig() {
         localStorage.setItem("google_script_url", document.getElementById("googleScriptUrl").value);
+      }
+
+      function saveGoogleSheetUrl() {
+        localStorage.setItem("google_sheet_url", document.getElementById("googleSheetUrl").value);
       }
 
       function addExpenseRow() {
@@ -568,6 +581,8 @@
       window.onload = () => {
         const savedUrl = localStorage.getItem("google_script_url");
         if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
+        const sheetUrl = localStorage.getItem("google_sheet_url");
+        if (sheetUrl) document.getElementById("googleSheetUrl").value = sheetUrl;
 
         const monthInput = document.getElementById("monthYear");
         monthInput.value = new Date().toISOString().slice(0, 7);
@@ -577,6 +592,7 @@
       };
 
       function openSheetsModal() {
+        document.getElementById("sheetsFrame").src = localStorage.getItem("google_sheet_url");
         document.getElementById("sheetsModal").style.display = "block";
         document.body.style.overflow = "hidden"; // Chặn cuộn trang web khi đang xem Sheets
       }
