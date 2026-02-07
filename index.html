@@ -281,28 +281,53 @@
 
         <h2>📒 Quản lý Chi tiêu</h2>
 
-        <div class="input-group">
+        <div class="input-group" style="grid-template-columns: 1fr">
           <div>
             <label style="font-size: 14px; color: #64748b">Tháng/Năm</label>
             <input type="month" id="monthYear" />
           </div>
-          <div>
-            <label style="font-size: 14px; color: #64748b">Thu nhập (VNĐ)</label>
-            <input type="number" id="income" placeholder="VD: 15000000" />
-          </div>
         </div>
 
-        <div id="expenseList">
-          <div class="expense-row">
-            <input type="text" placeholder="Tên khoản chi" class="ex-name" />
-            <input type="number" placeholder="Số tiền" class="ex-amount" />
-            <button onclick="this.parentElement.remove()" style="background: #fee2e2; color: var(--d)">✕</button>
+        <h4
+          style="margin-bottom: 10px; color: var(--s); cursor: pointer; display: flex; align-items: center"
+          onclick="toggleSection('secttionIncome', 'iconInc')"
+        >
+          💰 Các khoản thu (Lương, Thưởng...)
+          <span id="iconInc" style="margin-left: 10px; transition: 0.3s; font-size: 12px">▼</span>
+        </h4>
+        <div id="secttionIncome">
+          <div id="incomeList">
+            <div class="income-row" style="display: flex; gap: 8px; margin-bottom: 10px">
+              <input type="text" placeholder="Tên khoản thu" class="in-name" value="Lương" />
+              <input type="number" placeholder="Số tiền" class="in-amount" />
+              <button onclick="this.parentElement.remove()" style="background: #f0fdf4; color: var(--s)">✕</button>
+            </div>
           </div>
+          <button class="btn-add" onclick="addIncomeRow()" style="color: var(--s); border-color: #bbf7d0">
+            + Thêm khoản thu
+          </button>
         </div>
 
-        <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
+        <h4
+          style="margin-bottom: 10px; color: var(--d); cursor: pointer; display: flex; align-items: center"
+          onclick="toggleSection('expenseListSection', 'iconExp')"
+        >
+          💸 Các khoản chi tiêu
+          <span id="iconExp" style="margin-left: 10px; transition: 0.3s; font-size: 12px">▼</span>
+        </h4>
+        <div id="expenseListSection">
+          <div id="expenseList">
+            <div class="expense-row">
+              <input type="text" placeholder="Tên khoản chi" class="ex-name" />
+              <input type="number" placeholder="Số tiền" class="ex-amount" />
+              <button onclick="this.parentElement.remove()" style="background: #fee2e2; color: var(--d)">✕</button>
+            </div>
+          </div>
+          <button class="btn-add" onclick="addExpenseRow()">+ Thêm khoản chi</button>
+        </div>
+
         <div style="display: flex">
-          <button class="btn-main" style="height: 40px" onclick="processData()">📊 Lưu vào máy này</button>
+          <!-- <button class="btn-main" style="height: 40px" onclick="processData()">📊 Lưu vào máy này</button> -->
           <button class="btn-sync" style="height: 40px; margin-left: 10px" onclick="syncToGoogle()">
             ☁️ Đồng bộ lên Google Sheets
           </button>
@@ -310,7 +335,14 @@
             onclick="openSheetsModal()"
             style="background: #64748b; color: white; width: 100%; height: 40px; margin-left: 10px"
           >
-            👁️ Xem bảng tính trực tiếp
+            👁️ Xem Sheet
+          </button>
+          <button
+            class="btn-main"
+            style="background: #f59e0b; height: 40px; margin-left: 10px"
+            onclick="loadFromGoogle()"
+          >
+            🔄 Tải dữ liệu từ Sheets
           </button>
         </div>
 
@@ -374,14 +406,30 @@
     </div>
 
     <script>
+      // --- KHỞI TẠO & CẤU HÌNH ---
       window.onload = () => {
-        // const savedUrl = localStorage.getItem("google_script_url");
-        // const sheetUrl = localStorage.getItem("google_sheet_url");
-        // if (sheetUrl) document.getElementById("googleSheetUrl").value = sheetUrl;
-        // if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
-        // document.getElementById("monthYear").value = new Date().toISOString().slice(0, 7);
-        // renderHistory();
+        const savedUrl = localStorage.getItem("google_script_url");
+        if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
+        const sheetUrl = localStorage.getItem("google_sheet_url");
+        if (sheetUrl) document.getElementById("googleSheetUrl").value = sheetUrl;
+
+        const monthInput = document.getElementById("monthYear");
+        monthInput.value = new Date().toISOString().slice(0, 7);
+        updateInputsByMonth(monthInput.value);
       };
+
+      function toggleSection(id, iconId) {
+        const list = document.getElementById(id);
+        const icon = document.getElementById(iconId);
+
+        if (list.style.display === "none") {
+          list.style.display = "block";
+          icon.style.transform = "rotate(0deg)"; // Mũi tên chỉ xuống
+        } else {
+          list.style.display = "none";
+          icon.style.transform = "rotate(-90deg)"; // Mũi tên xoay ngang khi đóng
+        }
+      }
 
       function saveConfig() {
         localStorage.setItem("google_script_url", document.getElementById("googleScriptUrl").value);
@@ -389,6 +437,17 @@
 
       function saveGoogleSheetUrl() {
         localStorage.setItem("google_sheet_url", document.getElementById("googleSheetUrl").value);
+      }
+
+      // --- QUẢN LÝ ROW (THÊM/XÓA) ---
+      function addIncomeRow() {
+        const div = document.createElement("div");
+        div.className = "income-row";
+        div.style = "display: flex; gap: 8px; margin-bottom: 10px;";
+        div.innerHTML = `<input type="text" placeholder="Tên khoản thu" class="in-name">
+                         <input type="number" placeholder="Số tiền" class="in-amount">
+                         <button onclick="this.parentElement.remove()" style="background:#f0fdf4; color:var(--s)">✕</button>`;
+        document.getElementById("incomeList").appendChild(div);
       }
 
       function addExpenseRow() {
@@ -400,79 +459,71 @@
         document.getElementById("expenseList").appendChild(div);
       }
 
+      // --- XỬ LÝ DỮ LIỆU (CHỈ DÙNG 1 HÀM NÀY) ---
       function processData() {
         const date = document.getElementById("monthYear").value;
-        const income = parseFloat(document.getElementById("income").value) || 0;
-        const nameInputs = document.querySelectorAll(".ex-name");
-        const amountInputs = document.querySelectorAll(".ex-amount");
+        if (!date) return alert("Vui lòng chọn Tháng/Năm!");
 
-        let items = [];
-        let totalExp = 0;
-        nameInputs.forEach((input, i) => {
-          const amount = parseFloat(amountInputs[i].value) || 0;
-          if (amount > 0) {
-            items.push({ name: input.value || "Khác", amount });
-            totalExp += amount;
+        // 1. Tính toán Thu nhập
+        let incomeItems = [];
+        let totalIncome = 0;
+        document.querySelectorAll(".income-row").forEach((row) => {
+          const name = row.querySelector(".in-name").value || "Thu nhập";
+          const amt = parseFloat(row.querySelector(".in-amount").value) || 0;
+          if (amt > 0) {
+            incomeItems.push({ name, amount: amt });
+            totalIncome += amt;
           }
         });
 
-        const remain = income - totalExp;
+        // 2. Tính toán Chi tiêu
+        let expenseItems = [];
+        let totalExp = 0;
+        document.querySelectorAll(".expense-row").forEach((row) => {
+          const name = row.querySelector(".ex-name").value || "Chi tiêu";
+          const amt = parseFloat(row.querySelector(".ex-amount").value) || 0;
+          if (amt > 0) {
+            expenseItems.push({ name, amount: amt });
+            totalExp += amt;
+          }
+        });
+
+        const remain = totalIncome - totalExp;
+
+        // 3. Lưu vào LocalStorage
         let history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
         const idx = history.findIndex((item) => item.date === date);
-        const entry = { date, income, totalExp, remain, items };
+        const entry = { date, income: totalIncome, incomeItems, totalExp, remain, items: expenseItems };
 
         if (idx > -1) history[idx] = entry;
         else history.push(entry);
+
         history.sort((a, b) => new Date(a.date) - new Date(b.date));
-
         localStorage.setItem("expense_detail_data", JSON.stringify(history));
+
         renderHistory();
-        updateInputsByMonth(date);
-        alert("Đã lưu thành công!");
+        alert("Đã lưu vào máy thành công!");
       }
 
-      async function syncToGoogle() {
-        const url = document.getElementById("googleScriptUrl").value;
-        if (!url) return alert("Vui lòng điền Web App URL!");
-
-        const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
-        if (history.length === 0) {
-          if (!confirm("Lịch sử trống, bạn có muốn xóa sạch dữ liệu trên Google Sheets?")) return;
-        }
-
-        if (
-          !confirm(
-            `Hệ thống sẽ ghi đè toàn bộ dữ liệu hiện có trên Sheets bằng ${history.length} bản ghi từ máy này. Tiếp tục?`,
-          )
-        )
-          return;
-
-        try {
-          // Gửi toàn bộ mảng history thay vì gửi từng entry
-          await fetch(url, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify(history), // Gửi cả mảng
-            headers: { "Content-Type": "application/json" },
-          });
-          alert("Đã đồng bộ sạch sẽ! Sheets hiện tại đã khớp 100% với máy này.");
-        } catch (e) {
-          alert("Lỗi đồng bộ: " + e.message);
-        }
-      }
-
+      // --- HIỂN THỊ ---
       function renderHistory() {
         const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
         const tbody = document.querySelector("#historyTable tbody");
-        const selectedYear = document.getElementById("monthYear").value.split("-")[0];
+        const monthInput = document.getElementById("monthYear").value;
+        const selectedYear = monthInput.split("-")[0];
+
         document.getElementById("displayYear").innerText = selectedYear;
         tbody.innerHTML = "";
 
         let totalAcc = 0;
         let yearlyAcc = 0;
+        let currentMonthRemain = 0;
+
         history.forEach((data, index) => {
           totalAcc += data.remain;
           if (data.date.startsWith(selectedYear)) yearlyAcc += data.remain;
+          if (data.date === monthInput) currentMonthRemain = data.remain;
+
           tbody.innerHTML += `<tr>
                 <td><b>${data.date}</b></td>
                 <td>${data.income.toLocaleString()}</td>
@@ -480,139 +531,171 @@
                 <td><button class="btn-view" onclick="showDetail(${index})">👁 Xem</button></td>
             </tr>`;
         });
+
         document.getElementById("totalRemain").innerText = totalAcc.toLocaleString() + " ₫";
         document.getElementById("yearlyRemain").innerText = yearlyAcc.toLocaleString() + " ₫";
+        document.getElementById("monthlyRemain").innerText = currentMonthRemain.toLocaleString() + " ₫";
+      }
 
-        // Cập nhật số dư tháng đang chọn
-        const currentDate = document.getElementById("monthYear").value;
-        const currentData = history.find((h) => h.date === currentDate);
-        document.getElementById("monthlyRemain").innerText =
-          (currentData ? currentData.remain.toLocaleString() : "0") + " ₫";
+      function updateInputsByMonth(selectedDate) {
+        const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
+        const data = history.find((item) => item.date === selectedDate);
+        const incomeList = document.getElementById("incomeList");
+        const expenseList = document.getElementById("expenseList");
+
+        incomeList.innerHTML = "";
+        expenseList.innerHTML = "";
+
+        if (data) {
+          // Hiển thị khoản thu đã lưu
+          if (data.incomeItems && data.incomeItems.length > 0) {
+            data.incomeItems.forEach((item) => {
+              const div = document.createElement("div");
+              div.className = "income-row";
+              div.style = "display: flex; gap: 8px; margin-bottom: 10px;";
+              div.innerHTML = `<input type="text" class="in-name" value="${item.name}">
+                                     <input type="number" class="in-amount" value="${item.amount}">
+                                     <button onclick="this.parentElement.remove()" style="background:#f0fdf4; color:var(--s)">✕</button>`;
+              incomeList.appendChild(div);
+            });
+          } else {
+            addIncomeRow(); // Mặc định 1 dòng nếu chưa có chi tiết
+          }
+
+          // Hiển thị khoản chi đã lưu
+          data.items.forEach((item) => {
+            const div = document.createElement("div");
+            div.className = "expense-row";
+            div.innerHTML = `<input type="text" class="ex-name" value="${item.name}">
+                                 <input type="number" class="ex-amount" value="${item.amount}">
+                                 <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
+            expenseList.appendChild(div);
+          });
+        } else {
+          addIncomeRow();
+          addExpenseRow();
+        }
+        renderHistory();
       }
 
       function showDetail(index) {
         const history = JSON.parse(localStorage.getItem("expense_detail_data"));
         const data = history[index];
-        document.getElementById("modalTitle").innerText = "Chi tiết: " + data.date;
+        document.getElementById("modalTitle").innerText = "Chi tiết chi tiêu: " + data.date;
         const modalBody = document.getElementById("modalBody");
         modalBody.innerHTML = "";
 
-        // Bắt đầu từ số thu nhập ban đầu
-        let runningBalance = data.income;
+        // Hiển thị thu nhập trong modal
+        let html = `<tr><td colspan="3" style="background:#f0fdf4; font-weight:bold">➕ KHOẢN THU</td></tr>`;
+        (data.incomeItems || [{ name: "Lương", amount: data.income }]).forEach((item) => {
+          html += `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()} ₫</td><td>-</td></tr>`;
+        });
 
+        // Hiển thị chi tiêu trong modal
+        html += `<tr><td colspan="3" style="background:#fef2f2; font-weight:bold">➖ KHOẢN CHI</td></tr>`;
+        let runningBalance = data.income;
         data.items.forEach((item) => {
-          runningBalance -= item.amount; // Trừ dần từng khoản chi
-          modalBody.innerHTML += `
-            <tr>
-              <td>${item.name}</td>
-              <td>${item.amount.toLocaleString()} ₫</td>
-              <td style="color: ${runningBalance >= 0 ? "#64748b" : "red"}">
-                ${runningBalance.toLocaleString()} ₫
-              </td>
+          runningBalance -= item.amount;
+          html += `<tr>
+                <td>${item.name}</td>
+                <td>${item.amount.toLocaleString()} ₫</td>
+                <td style="color: ${runningBalance >= 0 ? "#64748b" : "red"}">${runningBalance.toLocaleString()} ₫</td>
             </tr>`;
         });
 
+        modalBody.innerHTML = html;
         document.getElementById("modalTotal").innerHTML = `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; text-align: center;">
-            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Thu nhập</div>
-              <div style="font-size: 15px; color: var(--p); font-weight: 700;">${data.income.toLocaleString()} ₫</div>
-            </div>
-            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Tổng chi</div>
-              <div style="font-size: 15px; color: var(--d); font-weight: 700;">${data.totalExp.toLocaleString()} ₫</div>
-            </div>
-            <div style="grid-column: span 2; background: ${data.remain >= 0 ? "#f0fdf4" : "#fef2f2"}; padding: 12px; border-radius: 8px; border: 1px solid ${data.remain >= 0 ? "#bbf7d0" : "#fecaca"};">
-              <div style="font-size: 12px; color: #64748b;">Số dư cuối cùng</div>
-              <div style="font-size: 20px; color: ${data.remain >= 0 ? "var(--s)" : "var(--d)"}; font-weight: 800;">
-                ${data.remain.toLocaleString()} ₫
-              </div>
-            </div>
-          </div>
-        `;
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; text-align: center;">
+                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 11px; color: #64748b;">THU NHẬP</div>
+                    <div style="font-size: 15px; color: var(--p); font-weight: 700;">${data.income.toLocaleString()} ₫</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 11px; color: #64748b;">TỔNG CHI</div>
+                    <div style="font-size: 15px; color: var(--d); font-weight: 700;">${data.totalExp.toLocaleString()} ₫</div>
+                </div>
+                <div style="grid-column: span 2; background: ${data.remain >= 0 ? "#f0fdf4" : "#fef2f2"}; padding: 12px; border-radius: 8px; border: 1px solid ${data.remain >= 0 ? "#bbf7d0" : "#fecaca"};">
+                    <div style="font-size: 12px; color: #64748b;">CÒN DƯ</div>
+                    <div style="font-size: 20px; color: ${data.remain >= 0 ? "var(--s)" : "var(--d)"}; font-weight: 800;">${data.remain.toLocaleString()} ₫</div>
+                </div>
+            </div>`;
         document.getElementById("detailModal").style.display = "block";
       }
 
+      async function syncToGoogle() {
+        processData(); // Lưu dữ liệu trước khi đồng bộ
+        const url = document.getElementById("googleScriptUrl").value;
+        if (!url) return alert("Vui lòng điền Web App URL!");
+        const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
+        if (!confirm("Đồng bộ dữ liệu lên Google Sheets?")) return;
+
+        try {
+          await fetch(url, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify(history),
+            headers: { "Content-Type": "application/json" },
+          });
+          alert("Đã gửi dữ liệu! Kiểm tra Sheets của mày nhé.");
+        } catch (e) {
+          alert("Lỗi: " + e.message);
+        }
+      }
+
+      async function loadFromGoogle() {
+        const url = document.getElementById("googleScriptUrl").value;
+        if (!url) return alert("Vui lòng điền Web App URL!");
+
+        if (!confirm("Hành động này sẽ thay thế toàn bộ dữ liệu hiện tại trên máy bằng dữ liệu từ Sheets. Tiếp tục?"))
+          return;
+
+        try {
+          // Hiện thông báo đang tải cho xịn
+          const btn = event.target;
+          const originalText = btn.innerText;
+          btn.innerText = "⏳ Đang tải...";
+
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data && data.length > 0) {
+            localStorage.setItem("expense_detail_data", JSON.stringify(data));
+            renderHistory(); // Cập nhật lại bảng lịch sử
+
+            // Cập nhật luôn các ô input nếu đang ở tháng đó
+            const monthInput = document.getElementById("monthYear").value;
+            updateInputsByMonth(monthInput);
+
+            alert("Đã tải dữ liệu thành công! " + data.length + " bản ghi.");
+          } else {
+            alert("Không tìm thấy dữ liệu hợp lệ trên Sheets.");
+          }
+          btn.innerText = originalText;
+        } catch (e) {
+          alert("Lỗi khi tải dữ liệu: " + e.message);
+          console.error(e);
+        }
+      }
+
+      // --- CÁC HÀM TIỆN ÍCH KHÁC ---
       function closeModal() {
         document.getElementById("detailModal").style.display = "none";
       }
-
-      document.getElementById("monthYear").addEventListener("change", renderHistory);
-
-      // Hàm cập nhật các ô input dựa trên dữ liệu đã có của tháng được chọn
-      function updateInputsByMonth(selectedDate) {
-        const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
-        const existingData = history.find((item) => item.date === selectedDate);
-        const expenseList = document.getElementById("expenseList");
-        const incomeInput = document.getElementById("income");
-
-        if (existingData) {
-          // Nếu tháng này đã có dữ liệu: Đổ dữ liệu vào
-          incomeInput.value = existingData.income;
-          expenseList.innerHTML = ""; // Xóa các ô trống cũ
-          existingData.items.forEach((item) => {
-            const div = document.createElement("div");
-            div.className = "expense-row";
-            div.innerHTML = `
-              <input type="text" class="ex-name" value="${item.name}">
-              <input type="number" class="ex-amount" value="${item.amount}">
-              <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
-            expenseList.appendChild(div);
-          });
-        } else {
-          // Nếu tháng mới hoàn toàn: Để trống thu nhập và hiện 1 hàng nhập trống
-          incomeInput.value = "";
-          expenseList.innerHTML = `
-            <div class="expense-row">
-              <input type="text" placeholder="Tên khoản chi" class="ex-name">
-              <input type="number" placeholder="Số tiền" class="ex-amount">
-              <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>
-            </div>`;
-        }
-        renderHistory(); // Cập nhật lại các thẻ thống kê
+      function openSheetsModal() {
+        const url = localStorage.getItem("google_sheet_url");
+        if (!url) return alert("Chưa có link Sheets!");
+        document.getElementById("sheetsFrame").src = url;
+        document.getElementById("sheetsModal").style.display = "block";
       }
-
-      // Lắng nghe sự kiện thay đổi tháng
+      function closeSheetsModal() {
+        document.getElementById("sheetsModal").style.display = "none";
+      }
       document.getElementById("monthYear").addEventListener("change", function () {
         updateInputsByMonth(this.value);
       });
-
-      // Cập nhật hàm window.onload để khi vừa mở web là nó kiểm tra tháng hiện tại luôn
-      window.onload = () => {
-        const savedUrl = localStorage.getItem("google_script_url");
-        if (savedUrl) document.getElementById("googleScriptUrl").value = savedUrl;
-        const sheetUrl = localStorage.getItem("google_sheet_url");
-        if (sheetUrl) document.getElementById("googleSheetUrl").value = sheetUrl;
-
-        const monthInput = document.getElementById("monthYear");
-        monthInput.value = new Date().toISOString().slice(0, 7);
-
-        // Gọi hàm kiểm tra ngay khi load trang
-        updateInputsByMonth(monthInput.value);
-      };
-
-      function openSheetsModal() {
-        document.getElementById("sheetsFrame").src = localStorage.getItem("google_sheet_url");
-        document.getElementById("sheetsModal").style.display = "block";
-        document.body.style.overflow = "hidden"; // Chặn cuộn trang web khi đang xem Sheets
-      }
-
-      function closeSheetsModal() {
-        document.getElementById("sheetsModal").style.display = "none";
-        document.body.style.overflow = "auto"; // Cho phép cuộn lại bình thường
-      }
-
-      // Đóng modal khi bấm ra ngoài vùng trắng
-      window.onclick = function (event) {
-        let modal = document.getElementById("sheetsModal");
-        if (event.target == modal) {
-          closeSheetsModal();
-        }
-        // Giữ lại logic đóng modal chi tiết cũ của mày
-        let detailModal = document.getElementById("detailModal");
-        if (event.target == detailModal) {
-          closeModal();
-        }
+      window.onclick = function (e) {
+        if (e.target == document.getElementById("sheetsModal")) closeSheetsModal();
+        if (e.target == document.getElementById("detailModal")) closeModal();
       };
     </script>
   </body>
