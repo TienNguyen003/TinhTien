@@ -179,10 +179,10 @@
       }
       .modal-content {
         background: white;
-        margin: 5% auto;
+        margin: 1% auto;
         padding: 20px;
         border-radius: 12px;
-        max-width: 500px;
+        max-width: 1200px;
         width: 100%;
         position: relative;
         max-height: 90vh;
@@ -236,6 +236,12 @@
 
         h2 {
           font-size: 20px;
+        }
+
+        .btn-sync,
+        .btn-main,
+        .btn-preview {
+          font-size: 10px;
         }
       }
 
@@ -332,6 +338,7 @@
             ☁️ Đồng bộ lên Google Sheets
           </button>
           <button
+            class="btn-preview"
             onclick="openSheetsModal()"
             style="background: #64748b; color: white; width: 100%; height: 40px; margin-left: 10px"
           >
@@ -405,6 +412,31 @@
       </div>
     </div>
 
+    <div
+      id="reportSection"
+      style="
+        margin-top: 30px;
+        padding: 20px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        display: none;
+      "
+    >
+      <h3 style="margin-top: 0">📊 Báo cáo chi tiết: <span id="reportTitle"></span></h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+        <div>
+          <h4 style="color: var(--d)">Top chi tiêu nhiều nhất</h4>
+          <div id="topExpenses"></div>
+        </div>
+        <div>
+          <h4 style="color: var(--p)">Phân bổ tài chính</h4>
+          <p id="savingRate"></p>
+          <div id="expenseAnalysis"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
       // --- KHỞI TẠO & CẤU HÌNH ---
       window.onload = () => {
@@ -440,69 +472,75 @@
       }
 
       // --- QUẢN LÝ ROW (THÊM/XÓA) ---
-      function addIncomeRow() {
+      function addIncomeRow(name = "", amount = "", date = "") {
+        const today = date || new Date().toISOString().split("T")[0]; // Mặc định lấy ngày hôm nay
         const div = document.createElement("div");
         div.className = "income-row";
         div.style = "display: flex; gap: 8px; margin-bottom: 10px;";
-        div.innerHTML = `<input type="text" placeholder="Tên khoản thu" class="in-name">
-                         <input type="number" placeholder="Số tiền" class="in-amount">
-                         <button onclick="this.parentElement.remove()" style="background:#f0fdf4; color:var(--s)">✕</button>`;
+        div.innerHTML = `
+          <input type="date" class="in-date" value="${today}" style="flex: 1">
+          <input type="text" placeholder="Tên khoản thu" class="in-name" value="${name}" style="flex: 2">
+          <input type="number" placeholder="Số tiền" class="in-amount" value="${amount}" style="flex: 1.5">
+          <button onclick="this.parentElement.remove()" style="background:#f0fdf4; color:var(--s)">✕</button>`;
         document.getElementById("incomeList").appendChild(div);
       }
 
-      function addExpenseRow() {
+      function addExpenseRow(name = "", amount = "", date = "") {
+        const today = date || new Date().toISOString().split("T")[0];
         const div = document.createElement("div");
         div.className = "expense-row";
-        div.innerHTML = `<input type="text" placeholder="Tên khoản chi" class="ex-name">
-                         <input type="number" placeholder="Số tiền" class="ex-amount">
-                         <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
+        div.style = "display: flex; gap: 8px; margin-bottom: 10px;";
+        div.innerHTML = `
+          <input type="date" class="ex-date" value="${today}" style="flex: 1">
+          <input type="text" placeholder="Tên khoản chi" class="ex-name" value="${name}" style="flex: 2">
+          <input type="number" placeholder="Số tiền" class="ex-amount" value="${amount}" style="flex: 1.5">
+          <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
         document.getElementById("expenseList").appendChild(div);
       }
 
       // --- XỬ LÝ DỮ LIỆU (CHỈ DÙNG 1 HÀM NÀY) ---
       function processData() {
-        const date = document.getElementById("monthYear").value;
-        if (!date) return alert("Vui lòng chọn Tháng/Năm!");
+        const monthYear = document.getElementById("monthYear").value;
+        if (!monthYear) return alert("Vui lòng chọn Tháng/Năm!");
 
-        // 1. Tính toán Thu nhập
+        // Thu thập dữ liệu thu
         let incomeItems = [];
         let totalIncome = 0;
         document.querySelectorAll(".income-row").forEach((row) => {
+          const date = row.querySelector(".in-date").value;
           const name = row.querySelector(".in-name").value || "Thu nhập";
           const amt = parseFloat(row.querySelector(".in-amount").value) || 0;
           if (amt > 0) {
-            incomeItems.push({ name, amount: amt });
+            incomeItems.push({ date, name, amount: amt });
             totalIncome += amt;
           }
         });
 
-        // 2. Tính toán Chi tiêu
+        // Thu thập dữ liệu chi
         let expenseItems = [];
         let totalExp = 0;
         document.querySelectorAll(".expense-row").forEach((row) => {
+          const date = row.querySelector(".ex-date").value;
           const name = row.querySelector(".ex-name").value || "Chi tiêu";
           const amt = parseFloat(row.querySelector(".ex-amount").value) || 0;
           if (amt > 0) {
-            expenseItems.push({ name, amount: amt });
+            expenseItems.push({ date, name, amount: amt });
             totalExp += amt;
           }
         });
 
         const remain = totalIncome - totalExp;
-
-        // 3. Lưu vào LocalStorage
         let history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
-        const idx = history.findIndex((item) => item.date === date);
-        const entry = { date, income: totalIncome, incomeItems, totalExp, remain, items: expenseItems };
+        const idx = history.findIndex((item) => item.date === monthYear);
+        const entry = { date: monthYear, income: totalIncome, incomeItems, totalExp, remain, items: expenseItems };
 
         if (idx > -1) history[idx] = entry;
         else history.push(entry);
 
         history.sort((a, b) => new Date(a.date) - new Date(b.date));
         localStorage.setItem("expense_detail_data", JSON.stringify(history));
-
         renderHistory();
-        alert("Đã lưu vào máy thành công!");
+        alert("Đã lưu dữ liệu chi tiết theo ngày!");
       }
 
       // --- HIỂN THỊ ---
@@ -540,85 +578,95 @@
       function updateInputsByMonth(selectedDate) {
         const history = JSON.parse(localStorage.getItem("expense_detail_data")) || [];
         const data = history.find((item) => item.date === selectedDate);
-        const incomeList = document.getElementById("incomeList");
-        const expenseList = document.getElementById("expenseList");
-
-        incomeList.innerHTML = "";
-        expenseList.innerHTML = "";
+        document.getElementById("incomeList").innerHTML = "";
+        document.getElementById("expenseList").innerHTML = "";
 
         if (data) {
-          // Hiển thị khoản thu đã lưu
           if (data.incomeItems && data.incomeItems.length > 0) {
-            data.incomeItems.forEach((item) => {
-              const div = document.createElement("div");
-              div.className = "income-row";
-              div.style = "display: flex; gap: 8px; margin-bottom: 10px;";
-              div.innerHTML = `<input type="text" class="in-name" value="${item.name}">
-                                     <input type="number" class="in-amount" value="${item.amount}">
-                                     <button onclick="this.parentElement.remove()" style="background:#f0fdf4; color:var(--s)">✕</button>`;
-              incomeList.appendChild(div);
-            });
+            data.incomeItems.forEach((item) => addIncomeRow(item.name, item.amount, item.date));
           } else {
-            addIncomeRow(); // Mặc định 1 dòng nếu chưa có chi tiết
+            addIncomeRow();
           }
-
-          // Hiển thị khoản chi đã lưu
-          data.items.forEach((item) => {
-            const div = document.createElement("div");
-            div.className = "expense-row";
-            div.innerHTML = `<input type="text" class="ex-name" value="${item.name}">
-                                 <input type="number" class="ex-amount" value="${item.amount}">
-                                 <button onclick="this.parentElement.remove()" style="background:#fee2e2; color:var(--d)">✕</button>`;
-            expenseList.appendChild(div);
-          });
+          data.items.forEach((item) => addExpenseRow(item.name, item.amount, item.date));
         } else {
           addIncomeRow();
           addExpenseRow();
         }
         renderHistory();
+        // if (typeof generateReport === "function") generateReport(selectedDate);
       }
 
       function showDetail(index) {
         const history = JSON.parse(localStorage.getItem("expense_detail_data"));
         const data = history[index];
-        document.getElementById("modalTitle").innerText = "Chi tiết chi tiêu: " + data.date;
+        document.getElementById("modalTitle").innerText = "Chi tiết: " + data.date;
         const modalBody = document.getElementById("modalBody");
         modalBody.innerHTML = "";
 
-        // Hiển thị thu nhập trong modal
-        let html = `<tr><td colspan="3" style="background:#f0fdf4; font-weight:bold">➕ KHOẢN THU</td></tr>`;
-        (data.incomeItems || [{ name: "Lương", amount: data.income }]).forEach((item) => {
-          html += `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()} ₫</td><td>-</td></tr>`;
-        });
+        // Sắp xếp item theo ngày
+        const sortedIncomes = (data.incomeItems || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+        const sortedExpenses = (data.items || []).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Hiển thị chi tiêu trong modal
-        html += `<tr><td colspan="3" style="background:#fef2f2; font-weight:bold">➖ KHOẢN CHI</td></tr>`;
-        let runningBalance = data.income;
-        data.items.forEach((item) => {
-          runningBalance -= item.amount;
-          html += `<tr>
-                <td>${item.name}</td>
+        // Hàm tạo HTML cho các dòng dữ liệu (để tái sử dụng)
+        const incomeRows = sortedIncomes
+          .map(
+            (item) => `
+              <tr class="income-item">
+                <td><small>${item.date}</small><br>${item.name}</td>
                 <td>${item.amount.toLocaleString()} ₫</td>
-                <td style="color: ${runningBalance >= 0 ? "#64748b" : "red"}">${runningBalance.toLocaleString()} ₫</td>
-            </tr>`;
-        });
+                <td>-</td>
+              </tr>`,
+                    )
+                    .join("");
+
+                  let runningBalance = data.income;
+                  const expenseRows = sortedExpenses
+                    .map((item) => {
+                      runningBalance -= item.amount;
+                      return `
+                <tr class="expense-item">
+                  <td><small>${item.date}</small><br>${item.name}</td>
+                  <td>${item.amount.toLocaleString()} ₫</td>
+                  <td style="color: ${runningBalance >= 0 ? "#64748b" : "red"}">${runningBalance.toLocaleString()} ₫</td>
+                </tr>`;
+                    })
+                    .join("");
+
+                  // Tạo HTML tổng thể với các hàng tiêu đề có thể Click
+                  let html = `
+              <tr style="cursor:pointer; background:#f0fdf4; user-select:none;">
+                <td colspan="3" style="font-weight:bold; position: relative;">
+                  ➕ KHOẢN THU (${sortedIncomes.length})
+                </td>
+              </tr>
+              ${incomeRows}
+
+              <tr style="cursor:pointer; background:#fef2f2; user-select:none;">
+                <td colspan="3" style="font-weight:bold; position: relative;">
+                  ➖ KHOẢN CHI (${sortedExpenses.length})
+                </td>
+              </tr>
+              ${expenseRows}
+            `;
 
         modalBody.innerHTML = html;
+
+        // Phần tổng kết bên dưới giữ nguyên logic cũ của mày
         document.getElementById("modalTotal").innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; text-align: center;">
-                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 11px; color: #64748b;">THU NHẬP</div>
-                    <div style="font-size: 15px; color: var(--p); font-weight: 700;">${data.income.toLocaleString()} ₫</div>
-                </div>
-                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 11px; color: #64748b;">TỔNG CHI</div>
-                    <div style="font-size: 15px; color: var(--d); font-weight: 700;">${data.totalExp.toLocaleString()} ₫</div>
-                </div>
-                <div style="grid-column: span 2; background: ${data.remain >= 0 ? "#f0fdf4" : "#fef2f2"}; padding: 12px; border-radius: 8px; border: 1px solid ${data.remain >= 0 ? "#bbf7d0" : "#fecaca"};">
-                    <div style="font-size: 12px; color: #64748b;">CÒN DƯ</div>
-                    <div style="font-size: 20px; color: ${data.remain >= 0 ? "var(--s)" : "var(--d)"}; font-weight: 800;">${data.remain.toLocaleString()} ₫</div>
-                </div>
-            </div>`;
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; text-align: center;">
+            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 11px; color: #64748b;">THU NHẬP</div>
+                <div style="font-size: 15px; color: var(--p); font-weight: 700;">${data.income.toLocaleString()} ₫</div>
+            </div>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 11px; color: #64748b;">TỔNG CHI</div>
+                <div style="font-size: 15px; color: var(--d); font-weight: 700;">${data.totalExp.toLocaleString()} ₫</div>
+            </div>
+            <div style="grid-column: span 2; background: ${data.remain >= 0 ? "#f0fdf4" : "#fef2f2"}; padding: 12px; border-radius: 8px; border: 1px solid ${data.remain >= 0 ? "#bbf7d0" : "#fecaca"};">
+                <div style="font-size: 12px; color: #64748b;">CÒN DƯ</div>
+                <div style="font-size: 20px; color: ${data.remain >= 0 ? "var(--s)" : "var(--d)"}; font-weight: 800;">${data.remain.toLocaleString()} ₫</div>
+            </div>
+        </div>`;
         document.getElementById("detailModal").style.display = "block";
       }
 
@@ -636,7 +684,7 @@
             body: JSON.stringify(history),
             headers: { "Content-Type": "application/json" },
           });
-          alert("Đã gửi dữ liệu! Kiểm tra Sheets của mày nhé.");
+          alert("Đã gửi dữ liệu! Kiểm tra Sheets nhé.");
         } catch (e) {
           alert("Lỗi: " + e.message);
         }
@@ -645,35 +693,60 @@
       async function loadFromGoogle() {
         const url = document.getElementById("googleScriptUrl").value;
         if (!url) return alert("Vui lòng điền Web App URL!");
-
-        if (!confirm("Hành động này sẽ thay thế toàn bộ dữ liệu hiện tại trên máy bằng dữ liệu từ Sheets. Tiếp tục?"))
-          return;
+        if (!confirm("Hành động này sẽ thay thế dữ liệu hiện tại. Tiếp tục?")) return;
 
         try {
-          // Hiện thông báo đang tải cho xịn
-          const btn = event.target;
-          const originalText = btn.innerText;
-          btn.innerText = "⏳ Đang tải...";
-
           const response = await fetch(url);
-          const data = await response.json();
+          let data = await response.json();
 
           if (data && data.length > 0) {
-            localStorage.setItem("expense_detail_data", JSON.stringify(data));
-            renderHistory(); // Cập nhật lại bảng lịch sử
+            // CHUẨN HÓA DỮ LIỆU SẠCH SẼ TRƯỚC KHI LƯU
+            const cleanData = data.map((monthData) => {
+              return {
+                ...monthData,
+                // Chỉ lấy YYYY-MM (Ví dụ: 2026-02)
+                date: monthData.date.split("T")[0].substring(0, 7),
+                incomeItems: (monthData.incomeItems || []).map((i) => ({
+                  ...i,
+                  date: i.date ? i.date.split("T")[0] : "", // Chỉ lấy YYYY-MM-DD
+                })),
+                items: (monthData.items || []).map((i) => ({
+                  ...i,
+                  date: i.date ? i.date.split("T")[0] : "", // Chỉ lấy YYYY-MM-DD
+                })),
+              };
+            });
 
-            // Cập nhật luôn các ô input nếu đang ở tháng đó
-            const monthInput = document.getElementById("monthYear").value;
-            updateInputsByMonth(monthInput);
+            localStorage.setItem("expense_detail_data", JSON.stringify(cleanData));
+            renderHistory();
 
-            alert("Đã tải dữ liệu thành công! " + data.length + " bản ghi.");
-          } else {
-            alert("Không tìm thấy dữ liệu hợp lệ trên Sheets.");
+            // Sau khi tải xong, kích hoạt fill dữ liệu cho tháng đang hiển thị
+            const currentSelected = document.getElementById("monthYear").value;
+            updateInputsByMonth(currentSelected);
+
+            alert("Đã tải và đồng bộ dữ liệu sạch!");
           }
-          btn.innerText = originalText;
         } catch (e) {
-          alert("Lỗi khi tải dữ liệu: " + e.message);
-          console.error(e);
+          alert("Lỗi khi tải: " + e.message);
+        }
+      }
+
+      // Hàm bổ trợ để đảm bảo ngày luôn là YYYY-MM-DD (Định dạng mà thẻ <input type="date"> cần)
+      function formatDateInput(dateStr) {
+        if (!dateStr) return "";
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr;
+
+          // Lấy đúng ngày, tháng, năm
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+
+          // Trả về định dạng gọn: YYYY-MM-DD
+          return `${year}-${month}-${day}`;
+        } catch (e) {
+          return dateStr;
         }
       }
 
@@ -681,6 +754,7 @@
       function closeModal() {
         document.getElementById("detailModal").style.display = "none";
       }
+
       function openSheetsModal() {
         const url = localStorage.getItem("google_sheet_url");
         if (!url) return alert("Chưa có link Sheets!");
@@ -690,9 +764,11 @@
       function closeSheetsModal() {
         document.getElementById("sheetsModal").style.display = "none";
       }
+
       document.getElementById("monthYear").addEventListener("change", function () {
         updateInputsByMonth(this.value);
       });
+
       window.onclick = function (e) {
         if (e.target == document.getElementById("sheetsModal")) closeSheetsModal();
         if (e.target == document.getElementById("detailModal")) closeModal();
